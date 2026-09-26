@@ -1,0 +1,24 @@
+#!name = 火影忍者福利站 · 自动签到
+#!desc = 火影签到 v9.2：打开微信小程序自动抓取登录态（24 小时票据自动续期），每天定时自动完成福利站签到并领取礼包；脱敏日志推到你自己的私密频道（频道名填在插件参数 logTopic，不进仓库）；上报遇网络抖动会重试、同一批日志只推一次、不再误报「上报失败」；v9 把签到流程号校正为实测的 1083576（旧版填着状态查询 1083547，只会查状态、根本不签到）；v9.1 新增「手动签到」：浏览器打开 https://ulinkact.game.qq.com/hyrz-sign-now 立刻跑一次，加 ?force=1 可强制重发签到流程并回显服务端原文（测试用）；v9.2 服务端报错不再显示成 \uXXXX 天书、并能认出限流/顶层挡回（限流时先不发签到请求，不再给错误的流程号结论）
+#!author = Bzmshang
+#!homepage = https://github.com/bzmshang/hyrz-checkin
+#!icon = https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/28/48/e6/2848e651-522a-cef2-2fac-1bcb0752d0de/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg
+#!tag = 游戏,签到,火影忍者
+#!type = normal
+
+[Argument]
+cronTime = select,"0 9 * * *","0 8 * * *","0 9 * * *","0 10 * * *","0 12 * * *","0 18 * * *","0 20 * * *",tag=每天签到时间,desc=cron 表达式：分 时 日 月 周
+signFlow = input,"1083576",tag=签到流程ID,desc=AMS 的 iFlowId，默认 1083576（实测的签到流程）；填 1083547 或留空都会按 1083576 处理
+claimGift = switch,true,tag=自动领取福利站礼包
+uploadLog = switch,true,tag=上报运行日志,desc=把脱敏后的运行日志推到你自己的频道（通知点开就是），关掉则只保留在本机
+debug = switch,false,tag=调试模式,desc=每收到一个福利站请求就弹一条通知（用来确认插件是否生效）
+logTopic = input,"",tag=日志频道名,desc=ntfy 私密频道名，只填在本机、不要外传（公开仓库里没有）；留空则不上报
+
+[Script]
+http-request ^https?:\/\/ulinkact\.game\.qq\.com\/hyrz-sign-now(\?|$) script-path=https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js,requires-body=false,timeout=30,tag=火影-手动签到,argument=[{claimGift},{signFlow},{uploadLog},{logTopic}],enable=true
+http-request ^https?:\/\/(x8m8\.ams\.game\.qq\.com|ulinkact\.game\.qq\.com)\/(?!hyrz-sign-now) script-path=https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sniff.js,requires-body=true,tag=火影-抓取登录态,argument=[{debug},{uploadLog},{logTopic}],enable=true
+http-response ^https?:\/\/(x8m8\.ams\.game\.qq\.com|ulinkact\.game\.qq\.com)\/(?!hyrz-sign-now) script-path=https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sniff.js,requires-body=true,tag=火影-记录领取结果,argument=[{debug},{uploadLog},{logTopic}],enable=true
+cron {cronTime} script-path=https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js,timeout=60,tag=火影-自动签到,argument=[{claimGift},{signFlow},{uploadLog},{logTopic}],enable=true
+
+[Mitm]
+hostname = x8m8.ams.game.qq.com, ulinkact.game.qq.com
