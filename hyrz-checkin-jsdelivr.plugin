@@ -1,0 +1,38 @@
+#!name = 火影忍者福利站 · 自动签到
+#!desc = 火影忍者福利站自动签到 v9.13：打开微信小程序就自动抓登录态（票据 24 小时自动续），每天定时签到 + 领礼包；参数 autoTasks 打开后还会把「活跃任务」做到小程序里能做的上限（上报查看类 + 逐项领奖励 + 开积分宝箱）。通知只讲「自动领到了什么 / 什么没领到」，点开不再跳转；想手动操作或看日志，去 Loon 的「脚本」列表里点「火影·手动签到 / 火影·手动补领 / 火影·看日志」，结果（含脱敏原文和日志）直接出在 Loon 内的页面里，不跳浏览器也不用输网址。实测发奖接口只认「当天在小程序里刷新过的登录态」，登录态不是今天的就不去白碰（免得白挨 4414）；你在小程序里点一下刷新后，12:00 / 21:00 两条补领任务会把当天没领的补齐（v9.13 起不再弹「该补领了」提醒，只记一行日志）。频道名只存在本机。变更与用法见主页。
+#!author = Bzmshang
+#!homepage = https://github.com/bzmshang/hyrz-checkin
+#!icon = https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/28/48/e6/2848e651-522a-cef2-2fac-1bcb0752d0de/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg
+#!tag = 游戏,签到,火影忍者
+#!type = normal
+
+[Argument]
+cronTime = select,"0 9 * * *","0 8 * * *","0 9 * * *","0 10 * * *","0 12 * * *","0 18 * * *","0 20 * * *",tag=每天签到时间,desc=cron 表达式：分 时 日 月 周
+signFlow = input,"1083576",tag=签到流程ID,desc=AMS 的 iFlowId，默认 1083576（实测的签到流程）；填 1083547 或留空都会按 1083576 处理
+claimGift = switch,true,tag=自动领取福利站礼包
+autoTasks = switch,false,tag=定时任务顺便做活跃任务,desc=打开后定时任务也会做活跃任务（上报查看类 + 逐项领奖励 + 开积分宝箱），跑完附一行「活跃自检：X/100」；想现场试就去 Loon 的「脚本」列表点一下「火影·手动补领」
+catchup = switch,true,tag=刷新登录态后自动补领,desc=打开后：12:00 / 21:00 各跑一次补领（当天已领满就直接跳过，不发通知），并且在小程序里刷新出「今天的登录态」而当天还没领满时记一行补领日志（一天最多一条；v9.13 起不再弹「该补领了」通知）。关掉则两条补领任务直接跳过、也不记补领日志
+uploadLog = switch,true,tag=上报运行日志,desc=把脱敏后的运行日志推到你自己的频道（在 Loon 的「脚本」列表里点「火影·看日志」就能看），关掉则只保留在本机
+debug = switch,false,tag=调试模式,desc=每收到一个福利站请求就弹一条通知（用来确认插件是否生效）
+logTopic = input,"",tag=日志频道名,desc=ntfy 私密频道名，只填在本机、不要外传（公开仓库里没有）；留空则不上报（也可用 ?topic=频道名 一次性存进本机）
+
+[Script]
+http-request ^https?:\/\/ulinkact\.game\.qq\.com\/hyrz-panel-now(\?|$) script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,requires-body=false,timeout=60,tag=火影-手动页-按id跳页,argument=[{claimGift},{signFlow},{uploadLog},{logTopic},{autoTasks}],enable=true
+http-request ^https?:\/\/ulinkact\.game\.qq\.com\/hyrz-sign-now(\?|$) script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,requires-body=false,timeout=30,tag=火影-手动签到,argument=[{claimGift},{signFlow},{uploadLog},{logTopic}],enable=true
+http-request ^https?:\/\/ulinkact\.game\.qq\.com\/hyrz-task-now(\?|$) script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,requires-body=false,timeout=60,tag=火影-手动领活跃任务,argument=[{claimGift},{signFlow},{uploadLog},{logTopic},{autoTasks}],enable=true
+http-request ^https?:\/\/(x8m8\.ams\.game\.qq\.com|ulinkact\.game\.qq\.com)\/(?!hyrz-(sign|task|panel)-now) script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sniff.js,requires-body=true,tag=火影-抓取登录态,argument=[{debug},{uploadLog},{logTopic},{catchup}],enable=true
+http-response ^https?:\/\/(x8m8\.ams\.game\.qq\.com|ulinkact\.game\.qq\.com)\/(?!hyrz-(sign|task|panel)-now) script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sniff.js,requires-body=true,tag=火影-记录领取结果,argument=[{debug},{uploadLog},{logTopic},{catchup}],enable=true
+cron {cronTime} script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,timeout=60,tag=火影-自动签到,argument=[{claimGift},{signFlow},{uploadLog},{logTopic},{autoTasks}],enable=true
+cron "0 12 * * *" script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,timeout=60,tag=火影-补领活跃奖励-中午,argument=[{claimGift},{signFlow},{uploadLog},{logTopic},{autoTasks},{catchup}],enable=true
+cron "0 21 * * *" script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,timeout=60,tag=火影-补领活跃奖励-晚上,argument=[{claimGift},{signFlow},{uploadLog},{logTopic},{autoTasks},{catchup}],enable=true
+
+# v9.12：下面三条是「手动按钮」——Loon 的插件页只能放开关 / 下拉 / 输入框，放不了按钮，
+# 所以点一下就跑的入口做成 generic 脚本：在 Loon 的「脚本」列表里手点，结果直接渲染在 Loon 内的页面里（$done({title, htmlMessage})），
+# 不跳浏览器、也不用输网址。argument 是写死的字面量（不带插件参数占位符，免得依赖没被验证过的替换行为），
+# 所以这一跑用的是参数默认值 + 本机缓存的频道名。
+generic script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,timeout=60,tag=火影·手动签到,argument="now=sign",img-url=hand.tap.fill,enable=true
+generic script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,timeout=60,tag=火影·手动补领,argument="now=task",img-url=gift.fill,enable=true
+generic script-path=https://cdn.jsdelivr.net/gh/bzmshang/hyrz-checkin@main/hyrz-sign.js,timeout=30,tag=火影·看日志,argument="now=log",img-url=list.bullet.rectangle,enable=true
+
+[Mitm]
+hostname = x8m8.ams.game.qq.com, ulinkact.game.qq.com
