@@ -35,9 +35,10 @@ function rig(initial = {}) {
     assert.equal(done.length, 1); assert.equal(done[0].length, 1);
     assert.equal(Object.prototype.toString.call(done[0][0]), '[object Object]');
     assert.deepEqual(Reflect.ownKeys(done[0][0]), []);
-    assert.ok(reads.every(k => [A, D].includes(k)) && writes.every(k => [A, P, D].includes(k)));
+    const slot = k => /^hyrz_v916_cmp_(?:(?:status|sign|ams)_(?:req|resp)|overlap)$/.test(k);
+    assert.ok(reads.every(k => [A, D, 'hyrz_v916_cmp_ownUntil'].includes(k)) && writes.every(k => [A, P, D].includes(k) || slot(k)));
     now += 13;
-    return writes;
+    return writes.filter(k => !slot(k)); // Existing assertions cover auth/legacy snapshot only; dedicated comparison tests check new slots.
   }
   return {hook, mem, get: k => JSON.parse(mem[k] || 'null'), now: () => now};
 }
@@ -60,12 +61,12 @@ test('exact app without credentials: strictly enumerated status/action and lates
   const h = rig();
   const r = flow => req('sOpenid=not-diagnostic&iFlowId=' + flow, '', AMSURL);
   assert.deepEqual(h.hook(r('1083547')), [D]);
-  assert.deepEqual(h.get(D), {at: NOW, reqAt: NOW, respAt: 0, phase: 'req', kind: 'status',
+  assert.deepEqual(h.get(D), {rev: 2, at: NOW, reqAt: NOW, respAt: 0, phase: 'req', kind: 'status',
     activity: '576370', flow: '1083547', http: null, code: null});
   const at = h.now();
   assert.deepEqual(h.hook(r('1083576'), {status: '200', body: JSON.stringify({modRet: {iRet: 101,
     sMsg: 'never-save', jData: {name: 'never-save'}}})}), [D]);
-  assert.deepEqual(h.get(D), {at, reqAt: NOW, respAt: at, phase: 'resp', kind: 'sign',
+  assert.deepEqual(h.get(D), {rev: 2, at, reqAt: NOW, respAt: at, phase: 'resp', kind: 'sign',
     activity: '576370', flow: '1083576', http: 200, code: 101});
   for (const body of ['private-text', '{"ret":"never-save"}', '{"ret":777777}', 'x'.repeat(32769)]) {
     h.hook(r('not-diagnostic'), {status: 'private-status', body});
@@ -74,7 +75,7 @@ test('exact app without credentials: strictly enumerated status/action and lates
   }
   h.hook(req(), {status: 200, body: '{"iRet":0}'});
   assert.equal(h.get(D).code, 0); assert.equal(h.get(D).kind, 'welfare');
-  assert.deepEqual(Object.keys(h.mem), [D]);
+  assert.deepEqual(Object.keys(h.mem).sort(), [D, 'hyrz_v916_cmp_status_req', 'hyrz_v916_cmp_sign_resp', 'hyrz_v916_cmp_ams_resp'].sort());
 });
 
 test('minimal encoded cookie, scoped queue and idempotence; old keys are neither read nor changed', () => {

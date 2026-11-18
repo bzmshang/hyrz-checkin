@@ -24,7 +24,7 @@ def base_url(value):
 
 def render(base):
     prefix = base_url(base) + '/'
-    return SCRIPT.sub(lambda m: prefix + m[0] + ('?v=9.16.1' if m[0] == 'hyrz-sign.js' else ''),
+    return SCRIPT.sub(lambda m: prefix + m[0] + '?v=9.16.2',
                       TEMPLATE.read_text(encoding='utf-8'))
 
 

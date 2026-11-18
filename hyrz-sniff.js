@@ -1,4 +1,4 @@
-// v9.16 · Loon http-request / http-response. Passive, local, own-session only.
+// v9.16.2 · Loon http-request / http-response. Passive, local, own-session only.
 // No migration: hyrz_auth (unscoped full header), legacy logs, URLs and arguments
 // are not inputs. No diagnostic is an authorization or proof of check-in success.
 (function () {
@@ -172,10 +172,38 @@
     return code;
   }
 
+  // Passive metadata only. Multiple hooks may run at once: an unrelated response
+  // must not overwrite either phase of the last identifiable status/sign flow.
+  function comparison(t, isResponse, at) {
+    if ($request.method !== 'POST' || !['status','sign','ams'].includes(t.kind)) return;
+    const prefix = 'hyrz_v916_cmp_';
+    const until = readJSON(prefix + 'ownUntil', 32);
+    if (Number.isSafeInteger(until) && at <= until && until - at <= 15000) {
+      $persistentStore.write(JSON.stringify({at}), prefix + 'overlap');
+      return; // May include concurrent official traffic. Do NOT claim to identify the client.
+    }
+    const d = {at};
+    if (isResponse) {
+      d.http = enumerated($response.status, HTTP);
+      const body = $response.body;
+      const j = bounded(body,32768) ? object(body) : null;
+      const f = j && object(j.flowRet), m = j && object(j.modRet);
+      const code = x => enumerated(x, [-1,0,101,429,1103,4414]);
+      d.top = code(j && j.ret); d.flow = code(f && f.iRet); d.biz = code(m && m.iRet);
+      const data = m && object(m.jData);
+      if (d.biz === 0 && d.http === 200 && responseCode(body) === 0 && data) {
+        const signed = enumerated(data.openid_jf_everyDay, [0,1]);
+        if (signed !== null) d.signed = signed;
+      }
+      // Do not interpret missing modRet as business success, or retain any payload.
+    }
+    $persistentStore.write(JSON.stringify(d), prefix + t.kind + (isResponse ? '_resp' : '_req'));
+  }
+
   function observe(t, isResponse, at) {
     const prev = readJSON(CAPTURE, 512);
     const last = k => prev && Number.isSafeInteger(prev[k]) && prev[k] > 0 && prev[k] <= at ? prev[k] : 0;
-    const d = {at, phase: isResponse ? 'resp' : 'req', kind: t.kind, activity: t.activity, flow: t.flow,
+    const d = {rev: 2, at, phase: isResponse ? 'resp' : 'req', kind: t.kind, activity: t.activity, flow: t.flow,
       http: isResponse ? enumerated($response.status, HTTP) : null,
       code: isResponse ? responseCode($response.body) : null,
       reqAt: isResponse ? last('reqAt') : at, respAt: isResponse ? at : last('respAt')};
@@ -187,6 +215,7 @@
     if (t) {
       const at = Date.now(), isResponse = typeof $response !== 'undefined';
       observe(t, isResponse, at);
+      try { comparison(t, isResponse, at); } catch (_) {} // Observation failures never block normal capture.
       if (!isResponse && $request.method === 'POST') capture($request, t, at);
     }
   } catch (_) {

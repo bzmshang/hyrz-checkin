@@ -26,7 +26,7 @@ def build(base, *options):
 class Manifests(unittest.TestCase):
     def test_variants(self):
         for name, base in BASES.items():
-            expected = LOCAL.replace('then script("hyrz-', f'then script("{base}/hyrz-').replace('hyrz-sign.js"','hyrz-sign.js?v=9.16.1"')
+            expected = LOCAL.replace('then script("hyrz-', f'then script("{base}/hyrz-').replace('hyrz-sign.js"','hyrz-sign.js?v=9.16.2"').replace('hyrz-sniff.js"','hyrz-sniff.js?v=9.16.2"')
             self.assertEqual((ROOT / name).read_text(encoding='utf-8'), expected, name)
             self.assertEqual(build(base + '/').stdout, expected, name)
 
@@ -82,7 +82,7 @@ class Manifests(unittest.TestCase):
             result = build(base, '-o', str(out))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout.strip(), 'loon://import?plugin=' + quote(base + '/test.plugin', safe=''))
-            self.assertEqual(out.read_text(encoding='utf-8'), LOCAL.replace('then script("hyrz-', f'then script("{base}/hyrz-').replace('hyrz-sign.js"','hyrz-sign.js?v=9.16.1"'))
+            self.assertEqual(out.read_text(encoding='utf-8'), LOCAL.replace('then script("hyrz-', f'then script("{base}/hyrz-').replace('hyrz-sign.js"','hyrz-sign.js?v=9.16.2"').replace('hyrz-sniff.js"','hyrz-sniff.js?v=9.16.2"'))
             self.assertNotEqual(build(base + '/other', '-o', str(out)).returncode, 0)
         for bad in ('./relative', 'http://nas.invalid', 'http://127.0.0.1:80', 'https://a:b@host',
                     'https://host/?token=bad', 'https://host/#bad', 'https://host/"\n'):

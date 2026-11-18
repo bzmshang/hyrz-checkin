@@ -1,5 +1,5 @@
 #!name = 火影忍者福利站 · 自动签到
-#!desc = v9.16.1 · 只在两个 HTTPS 接口采集；诊断、签到、补领和看日志从 Loon 脚本进入。
+#!desc = v9.16.2 · 只在两个 HTTPS 接口采集；诊断、签到、补领和看日志从 Loon 脚本进入。
 #!author = Bzmshang
 #!loon_version = 3.5.1(983)
 #!type = normal

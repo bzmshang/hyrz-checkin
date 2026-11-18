@@ -1,6 +1,6 @@
-/* v9.16.1 | 火影福利站：只对已配置的本人会话操作。不从网页触发，不搜索流程，不推送原始日志。 */
+/* v9.16.2 | 火影福利站：只对已配置的本人会话操作。不从网页触发，不搜索流程，不推送原始日志。 */
 "use strict";
-var VER = "9.16.1",
+var VER = "9.16.2",
   NS = "hyrz_v916_",
   START = Date.now(),
   END = START + 45000;
@@ -27,7 +27,7 @@ var OUT = {
   capture: "未取得本版会话",
   incomplete: "会话缺字段",
   expired: "本机票据已到期",
-  login: "服务端要求重新登录",
+  login: "接口未认可插件本次登录态",
   network: "网络请求未完成",
   http: "HTTP 请求失败",
   shape: "响应缺少明确的签到状态",
@@ -210,6 +210,9 @@ function game(a, url, body) {
   );
 }
 function ams(a, flow) {
+  // Local timing hint only, not an HTTP header. This interval can include
+  // concurrent mini-program traffic, so the hook cannot label it as official.
+  write("cmp_ownUntil", Date.now() + 15000);
   return game(a, AMS, {
     iActivityId: "576370",
     iFlowId: flow,
@@ -276,13 +279,33 @@ function status(r) {
       : "shape";
 }
 
+function compareLine() {
+  var now = Date.now(), pieces = [];
+  function recent(x) {
+    return x && Number.isSafeInteger(x.at) && x.at > 0 && x.at <= now && day(x.at) === day(now);
+  }
+  function val(x) { return Number.isSafeInteger(x) ? num(x) : "-"; }
+  function clock(x) { return time(x.at).slice(-8); }
+  [["status","状态1083547"],["sign","动作1083576"],["ams","未归类AMS"]].forEach(function(pair) {
+    var prefix = "cmp_" + pair[0], req = read(prefix + "_req"), res = read(prefix + "_resp");
+    if (!recent(req) && !recent(res)) return;
+    var parts = [];
+    if (recent(res)) parts.push("响应 " + clock(res) + " HTTP=" + val(res.http) + " 顶层=" + val(res.top) + " 流程=" + val(res.flow) + " 业务=" + val(res.biz) + (res.signed === 1 ? " 已签" : res.signed === 0 ? " 未签" : ""));
+    if (recent(req) && (!recent(res) || req.at > res.at)) parts.push("另见请求 " + clock(req) + "（未确认对应响应）");
+    pieces.push(pair[1] + "：" + parts.join("，"));
+  });
+  var overlap = read("cmp_overlap");
+  if (recent(overlap)) pieces.push("与插件请求时间重叠 " + clock(overlap) + "（不计入上述观察）");
+  return "签到页观察（今日被动记录）：" + (pieces.join("；") || "暂无 AMS 记录");
+}
 function snapshot() {
   var c = read("capture") || {},
     a = read("auth") || {},
     last = read("daily") || {};
   return [
     "本机时间记录（东八区）｜v" + VER,
-    "最近捕获：" +
+    compareLine(),
+    "最近捕获" + (c.rev === 2 ? "（采集 v9.16.2）" : "（尚无新版采集）") + "：" +
       time(c.at) +
       "；类型：" +
       ({ ams: "活动", welfare: "福利站", status: "签到状态", sign: "签到动作" }[
