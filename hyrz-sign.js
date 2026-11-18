@@ -1,6 +1,6 @@
-/* v9.16 | 火影福利站：只对已配置的本人会话操作。不从网页触发，不搜索流程，不推送原始日志。 */
+/* v9.16.1 | 火影福利站：只对已配置的本人会话操作。不从网页触发，不搜索流程，不推送原始日志。 */
 "use strict";
-var VER = "9.16",
+var VER = "9.16.1",
   NS = "hyrz_v916_",
   START = Date.now(),
   END = START + 45000;
@@ -102,7 +102,16 @@ function args() {
   var v = typeof $argument === "undefined" ? null : $argument;
   return v && typeof v === "object" && !Array.isArray(v) ? v : null;
 }
+// Literal fallback is restricted to read-only actions: a missing tag cannot trigger a write.
+function readOnlyMode() {
+  var arg = typeof $argument === 'undefined' ? null : $argument;
+  return arg === 'read:diagnosis' ? 'diag' : arg === 'read:history' ? 'log' : null;
+}
+function localOutput(text) {
+  try { console.log(String(text)); } catch (_) {} // Optional host API; $done still runs.
+}
 function modeOf() {
+  if (readOnlyMode()) return readOnlyMode();
   var n = typeof $script === "undefined" ? "" : String($script.name || "");
   return /^火影·定时补领-(12|15|18|21|23)$/.test(n)
     ? "catch"
@@ -526,11 +535,16 @@ async function summaryPush(mode, r, arg) {
 }
 async function entry() {
   // 没有 HTTP 控制面，即使旧规则误调用也直接放行。
-  if (typeof $request !== "undefined") return {};
+  if (typeof $request !== "undefined" && $request != null) {
+    // Never reinterpret an HTTP hook as a Generic action. Only an empty placeholder
+    // with an explicitly read-only Generic argument may proceed; no mutation.
+    if ($request.url || !readOnlyMode()) return {};
+  }
   var m = modeOf(),
     arg = args(),
     a = read("auth"),
     p = read("pending");
+  if (m === 'diag' || m === 'log') localOutput('[火影 v' + VER + '] ' + (m === 'diag' ? '只读诊断开始（不会签到或领奖）' : '读取本机运行记录'));
   if (!m)
     return {
       title: "火影 v" + VER,
@@ -548,6 +562,7 @@ async function entry() {
         .join("\n"),
     };
   }
+  if (m === 'diag' && readOnlyMode()) arg = {}; // No plugin settings required for a status read.
   if (!arg) {
     return {
       title: "火影 v" + VER,
@@ -651,6 +666,7 @@ async function entry() {
   function finish(v) {
     if (!done) {
       done = true;
+      if (v && typeof v.content === 'string') localOutput(v.content);
       $done(v || {});
     }
   }

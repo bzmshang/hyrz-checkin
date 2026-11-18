@@ -27,6 +27,6 @@
 
 - 手动：`火影·只读诊断`、`火影·手动签到`、`火影·手动补领`、`火影·看日志`。自动：`火影·每日签到`（默认 09:00）。模式按 `$script.name` 精确区分。
 - 本地参考只确认五/六段 cron，没确认逗号列表。兜底拆为 `火影·定时补领-12`、`-15`、`-18`、`-21`、`-23`（各小时 :05）；每小时 :02/:12/:22/:32/:42/:52 六条错峰指令共用 `火影·待办检查`。两类均由 `enable=${catchup}` 控制。
-- Generic/cron 的 `$argument` 是对象：`{${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}`。`signFlow` 默认字符串 `1083576`，四个开关默认关，`logTopic` 默认空；升级可能保留用户以前的值，请核对后再启用。采集脚本只接收 `{${catchup}}`，没有公开网址操作入口。
+- 只读诊断和本机日志使用固定的只读入口参数，不依赖 Loon 提供脚本标签。其余 Generic/cron 的 `$argument` 是对象：`{${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}`。`signFlow` 默认字符串 `1083576`，四个开关默认关，`logTopic` 默认空；升级可能保留用户以前的值，请核对后再启用。采集脚本只接收 `{${catchup}}`，没有公开网址操作入口。
 
 依据：[Script v2](https://nsloon.app/docs/Script/script_v2/)、[插件参数](https://nsloon.app/docs/Plugin/)、[导入 Scheme](https://nsloon.app/docs/Scheme/)。真机加载、相对路径基准及 iOS 调度仍以设备为准。

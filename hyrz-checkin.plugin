@@ -1,5 +1,5 @@
 #!name = 火影忍者福利站 · 自动签到
-#!desc = v9.16 · 只在两个 HTTPS 接口采集；诊断、签到、补领和看日志从 Loon 脚本进入。
+#!desc = v9.16.1 · 只在两个 HTTPS 接口采集；诊断、签到、补领和看日志从 Loon 脚本进入。
 #!author = Bzmshang
 #!loon_version = 3.5.1(983)
 #!type = normal
@@ -16,22 +16,22 @@ logTopic = input,"",type=string,tag=日志频道名（默认留空）
 [Script]
 request if ${url} ~= /^https:\/\/(?:x8m8\.ams\.game\.qq\.com\/ams\/ame\/amesvr|ulinkact\.game\.qq\.com\/app\/7335\/99200e6deafa8a6a\/index\.php)(?:\?[^#]*)?$/ then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sniff.js", {${catchup}}) with requires_body=true, tag="火影·采集请求"
 response if ${url} ~= /^https:\/\/(?:x8m8\.ams\.game\.qq\.com\/ams\/ame\/amesvr|ulinkact\.game\.qq\.com\/app\/7335\/99200e6deafa8a6a\/index\.php)(?:\?[^#]*)?$/ then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sniff.js", {${catchup}}) with requires_body=true, tag="火影·采集响应"
-generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·只读诊断", timeout=60
-generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·手动签到", timeout=60
-generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·手动补领", timeout=60
-generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·看日志", timeout=60
-cron ${cronTime} then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·每日签到", timeout=60
-cron "5 12 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-12", timeout=60
-cron "5 15 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-15", timeout=60
-cron "5 18 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-18", timeout=60
-cron "5 21 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-21", timeout=60
-cron "5 23 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-23", timeout=60
-cron "2 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
-cron "12 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
-cron "22 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
-cron "32 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
-cron "42 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
-cron "52 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
+generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", "read:diagnosis") with tag="火影·只读诊断", timeout=60
+generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·手动签到", timeout=60
+generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·手动补领", timeout=60
+generic then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", "read:history") with tag="火影·看日志", timeout=60
+cron ${cronTime} then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with tag="火影·每日签到", timeout=60
+cron "5 12 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-12", timeout=60
+cron "5 15 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-15", timeout=60
+cron "5 18 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-18", timeout=60
+cron "5 21 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-21", timeout=60
+cron "5 23 * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·定时补领-23", timeout=60
+cron "2 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
+cron "12 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
+cron "22 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
+cron "32 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
+cron "42 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
+cron "52 * * * *" then script("https://raw.githubusercontent.com/bzmshang/hyrz-checkin/main/hyrz-sign.js?v=9.16.1", {${signFlow},${claimGift},${autoTasks},${catchup},${uploadLog},${logTopic}}) with enable=${catchup}, tag="火影·待办检查", timeout=60
 
 [MitM]
 hostname = x8m8.ams.game.qq.com, ulinkact.game.qq.com
